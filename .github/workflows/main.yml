@@ -11,7 +11,7 @@ on:
 jobs:
   Build_x64:
     runs-on: windows-2019
-    timeout-minutes: 45
+    timeout-minutes: 60
 
     steps:
       - name: Checkout code
@@ -96,6 +96,19 @@ jobs:
       - name: Merging Build
         run: Installer\copy_build.cmd x64
 
+    #
+    # Sign Drivers
+    #
+
+      - name: Sign Drivers
+        run: |
+          echo "${{secrets.ROOT_CA_DER}}" > ca.der.asc
+          echo "${{secrets.KERNEL_MODE_PFX}}" > km.pfx.asc
+          certutil -decode ca.der.asc ca.der
+          certutil -decode km.pfx.asc km.pfx
+          C:\Program` Files` `(x86`)\Windows` Kits\10\bin\x64\signtool.exe sign /fd sha256 /a /ac .\\ca.der /f .\\km.pfx /p ${{secrets.CERT_PASS}} /tr http://sha256timestamp.ws.symantec.com/sha256/timestamp Installer/SbiePlus_x64/SbieDrv.sys
+          del ca.der.asc, ca.der, km.pfx.asc, km.pfx
+
       - name: Collect installer assets
         run: Installer\get_assets.cmd
 
@@ -116,6 +129,15 @@ jobs:
           path: |
             Installer/SbiePlus_x64/*
           retention-days: 60
+
+      - name: Upload SbieDrv.sys x64
+        uses: actions/upload-artifact@v3
+        with:
+          name: SbieDrv_x64
+          path: |
+            Installer/Install.ps1
+            Installer/*/SbieDrv.sys
+          retention-days: 90
 
 
   Build_ARM64:
@@ -191,6 +213,19 @@ jobs:
       - name: Merging Build
         run: Installer\copy_build.cmd ARM64
 
+    #
+    # Sign Drivers
+    #
+
+      - name: Sign Drivers
+        run: |
+          echo "${{secrets.ROOT_CA_DER}}" > ca.der.asc
+          echo "${{secrets.KERNEL_MODE_PFX}}" > km.pfx.asc
+          certutil -decode ca.der.asc ca.der
+          certutil -decode km.pfx.asc km.pfx
+          C:\Program` Files` `(x86`)\Windows` Kits\10\bin\x64\signtool.exe sign /fd sha256 /a /ac .\\ca.der /f .\\km.pfx /p ${{secrets.CERT_PASS}} /tr http://sha256timestamp.ws.symantec.com/sha256/timestamp Installer/SbiePlus_a64/SbieDrv.sys
+          del ca.der.asc, ca.der, km.pfx.asc, km.pfx
+
       - name: Upload Sandboxie ARM64
         if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
         uses: actions/upload-artifact@v3
@@ -200,6 +235,14 @@ jobs:
             Installer/SbiePlus_a64/*
           retention-days: 60
 
+      - name: Upload SbieDrv.sys ARM64
+        uses: actions/upload-artifact@v3
+        with:
+          name: SbieDrv_ARM64
+          path: |
+            Installer/Install.ps1
+            Installer/*/SbieDrv.sys
+          retention-days: 90
 
   Build_x86:
     runs-on: windows-2019
@@ -268,6 +311,19 @@ jobs:
       - name: Merging Build
         run: Installer\copy_build.cmd x86
 
+    #
+    # Sign Drivers
+    #
+
+      - name: Sign Drivers
+        run: |
+          echo "${{secrets.ROOT_CA_DER}}" > ca.der.asc
+          echo "${{secrets.KERNEL_MODE_PFX}}" > km.pfx.asc
+          certutil -decode ca.der.asc ca.der
+          certutil -decode km.pfx.asc km.pfx
+          C:\Program` Files` `(x86`)\Windows` Kits\10\bin\x64\signtool.exe sign /fd sha256 /a /ac .\\ca.der /f .\\km.pfx /p ${{secrets.CERT_PASS}} /tr http://sha256timestamp.ws.symantec.com/sha256/timestamp Installer/SbiePlus_x86/SbieDrv.sys
+          del ca.der.asc, ca.der, km.pfx.asc, km.pfx
+
       - name: Upload Sandboxie x86
         if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
         uses: actions/upload-artifact@v3
@@ -276,3 +332,12 @@ jobs:
           path: |
             Installer/SbiePlus_x86/*
           retention-days: 60
+
+      - name: Upload SbieDrv.sys x86
+        uses: actions/upload-artifact@v3
+        with:
+          name: SbieDrv_x86
+          path: |
+            Installer/Install.ps1
+            Installer/*/SbieDrv.sys
+          retention-days: 90
